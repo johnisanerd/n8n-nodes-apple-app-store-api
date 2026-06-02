@@ -7,7 +7,7 @@ import {
 	type ILoadOptionsFunctions,
 	type IHttpRequestOptions,
 } from 'n8n-workflow';
-import { ClassNameCamel, X_PLATFORM_APP_HEADER_ID, X_PLATFORM_HEADER_ID } from '../ApifyActorTemplate.node';
+import { ClassNameCamel, X_PLATFORM_APP_HEADER_ID, X_PLATFORM_HEADER_ID } from '../AppleAppStore.node';
 
 /**
  * Extended request options for Apify API calls
@@ -71,7 +71,9 @@ export async function apiRequest(
 			options,
 		);
 	} catch (error) {
-		if (error instanceof NodeApiError) throw error;
+		if (error instanceof NodeOperationError) {
+			throw new NodeOperationError(this.getNode(), error.message);
+		}
 
 		if (error.response?.body) {
 			throw new NodeApiError(this.getNode(), error, {
@@ -121,21 +123,15 @@ export async function pollRunStatus(
 }
 
 /**
- * Fetch dataset results and optionally trim to markdown for AI tool usage
+ * Fetch the raw dataset rows for a finished run. Output shaping happens in
+ * executeActor.ts (applyOutput), so this returns the rows untouched.
  */
-export async function getResults(this: IExecuteFunctions, datasetId: string): Promise<any> {
+export async function getResults(this: IExecuteFunctions, datasetId: string): Promise<any[]> {
 	const results = await apiRequest.call(this, {
 		method: 'GET',
 		uri: `/v2/datasets/${datasetId}/items`,
 	});
 
-	// SNIPPET 5: AI Agent tool usage optimizations
-	// It might be beneficial to remove fields like run info etc. This helps with the context limits of LLM's
-	// EXAMPLE BELOW: Leaves only relevant markdown result reducing total context usage
-	if (isUsedAsAiTool(this.getNode().type)) {
-		// results = results.map((item: any) => ({ markdown: item.markdown }));
-	}
-
-	return this.helpers.returnJsonArray(results);
+	return Array.isArray(results) ? results : [];
 }
 

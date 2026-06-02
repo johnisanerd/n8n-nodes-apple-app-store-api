@@ -15,12 +15,12 @@
 		"preserveConstEnums": true,
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
-		"incremental": true,
+		"incremental": false,
 		"declaration": true,
 		"sourceMap": true,
 		"skipLibCheck": true,
 		"outDir": "./dist/"
 	},
 	"include": ["credentials/**/*", "nodes/**/*", "nodes/**/*.json", "package.json"],
-	"exclude": ["nodes/ApifyActorTemplate/__tests__"]
+	"exclude": ["**/__tests__/**", "dist"]
 }

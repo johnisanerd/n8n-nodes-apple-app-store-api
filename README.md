@@ -1,207 +1,128 @@
-# n8n Nodes - Apify Actor Template
+# n8n-nodes-apple-app-store-api
 
-This template converts Apify Actors into n8n community nodes. The generation script reads your Actor's input schema and creates the node package structure, which you can then customize and publish.
-Simply provide an Actor ID, and the script generates a complete n8n community node package using your Actor's input schema—ready to customize and publish.
+Apple App Store reviews for n8n. Any app, any country, JSON output, pay-per-review.
 
-[Apify](https://apify.com) is a platform for building, deploying, and publishing web automation tools called Actors, while [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform that connects various services and APIs.
+**The only n8n node that works on apps you don't own.** It wraps three Apify-backed APIs behind one node and one credential, so you can pull reviews, search the store, and fetch full app details without an App Store Connect account.
 
----
+- **Get Reviews** for any iOS or macOS app, by name or by Apple ID.
+- **Search Apps** by keyword across 50+ country stores and 45 languages.
+- **Get App Details** (full product page: developer, pricing, ratings, screenshots, version history, and more).
 
-## Table of Contents
+iOS and macOS. 50+ country stores. Sort by recent, helpful, favorable, or critical. Auto-resolve apps by name, so your agent doesn't need to know the Apple ID. Cleanest review JSON in n8n: ISO-normalized dates and parsed helpfulness counts out of the box.
 
-- [Setup](#setup)
-  - [Prerequisites](#️-prerequisites)
-  - [1. Generate Your Node](#1-generate-your-node)
-  - [2. Customize Your Node](#2-customize-your-node)
-    - [Actor schema constants](#actor-schema-constants)
-    - [Node icon](#node-icon)
-    - [Subtitle](#subtitle)
-    - [Node description](#node-description)
-    - [AI tool result filtering](#ai-tool-result-filtering)
-    - [Node discoverability](#node-discoverability)
-- [Development](#development)
-- [Getting help](#getting-help)
-
-## Setup
-
-### ⚙️ Prerequisites
-
-- Node.js v23.11.1 or higher
-- A valid Apify Actor ID from the [Apify Store](https://apify.com/store)
+Built for AI agent workflows. Pass an app name, get clean reviews back, hand to Claude.
 
 ---
 
-### 1. Generate Your Node
+## Installation
 
-Install dependencies:
+1. In n8n, open **Settings > Community Nodes**.
+2. Select **Install**.
+3. Enter `n8n-nodes-apple-app-store-api` and confirm.
 
-```bash
-npm install
-```
+n8n Cloud installs verified community nodes the same way. The node also works as an **AI Agent tool**.
 
-Run the generation script:
+## Credentials
 
-```bash
-npm run create-actor-app
-```
+The node calls the Apify API, so you need a free [Apify](https://apify.com?fpr=9n7kx3) account and an API token.
 
-When prompted, enter your Actor ID. Find this in your Actor's console URL, for example, if your Actor page is `https://console.apify.com/actors/aYG0l9s7dbB7j3gbS/input`, the Actor ID is `aYG0l9s7dbB7j3gbS`.
+1. Sign in to Apify and open **Settings > Integrations** to copy your **API token**.
+2. In n8n, create a new **Apify API** credential and paste the token.
+3. n8n Cloud users can connect with **Apify OAuth2** instead of a token.
 
-The script fetches your Actor's metadata and input schema, generates node files with proper naming, converts Actor input fields into n8n node parameters, and creates all necessary boilerplate code.
+You are not connecting to App Store Connect. This node reads public App Store data through Apify and never touches your developer account.
 
-Test the generated node:
+## Operations
 
-```bash
-npm run build
-npm run dev
-```
+### Review: Get Many
 
----
+Retrieve reviews for one or more apps.
 
-### 2. Customize Your Node
+- **App Name**: a free-form name (for example `spotify`) that auto-resolves to the top match. Convenient for agents.
+- **Apple Product IDs**: one or more numeric App Store IDs for exact targeting. Each ID appears in the App Store URL.
+- **Country Store**, **Sort Order** (most recent, most helpful, most favorable, most critical), **Maximum Reviews per App**, **Start Page**, **Include macOS Apps**, **Normalize Review Dates to ISO**, **Parse Helpfulness Counts**.
 
-After generation, your node files will be located in:
-```
-nodes/Apify<YourActorName>/
-```
+Provide an App Name or at least one Product ID. Sort applies to iOS only; macOS always returns most recent.
 
-For example, if you converted the **Website Content Crawler** Actor, the folder will be:
-```
-nodes/ApifyWebsiteContentCrawler/
-```
+### App: Search
 
-#### Customization
+Search the App Store by keyword.
 
-The generated code includes five sections labeled with `SNIPPET` comments. Search for `SNIPPET` in your IDE to locate them quickly.
+- **Search Term** (required), **Country Store**, **Language**, **Results Per Page** (1 to 200), **Maximum Pages**, **Device Class**, **Search Scope** (app name or developer name), **Category ID**, **Filter Explicit Apps**.
 
-##### Actor schema constants
+### App: Get
 
-Location: `nodes/Apify{YourActorName}/Apify{YourActorName}.node.ts`
+Fetch the full product page for one or more apps.
 
-The script generates these constants from your Actor's metadata:
+- **App Store IDs or URLs** (required): numeric IDs or full App Store URLs (the ID is parsed automatically).
+- **Country Store**, **Include Sample Reviews**, **Include Related App Lists**.
 
-```typescript
-export const ACTOR_ID = 'aYG0l9s7dbB7j3gbS'
-export const CLASS_NAME = 'ApifyWebsiteContentCrawler'
-export const DISPLAY_NAME = 'Apify Website Content Crawler'
-export const DESCRIPTION = ''
-```
+## Output modes
 
-> **Tip:** Change `DISPLAY_NAME` or `DESCRIPTION` to adjust how your node appears in the n8n interface.
+Every operation has an **Output** option with three modes:
 
----
+- **Simplified** (default): a compact, AI-friendly subset of the most useful fields. The default when the node is used as an AI tool, to keep an agent's context small.
+- **Raw**: every field the API returns.
+- **Selected Fields**: pick exactly which fields to return. For reviews, `product_id` and `review_date_iso` are always included as dedupe keys; for search and app details, `app_id` is always included.
 
-##### Node icon
+### Simplified review fields
 
-Location: `nodes/Apify{YourActorName}/Apify{YourActorName}.node.ts`
+| Field | Description |
+|---|---|
+| `rating` | Star rating, 1 to 5 |
+| `title` | Review title |
+| `text` | Review body |
+| `author` | Reviewer name |
+| `version` | App version reviewed |
+| `review_date_iso` | Review date, ISO 8601 |
+| `country` | Country store |
+| `product_id` | Apple product ID |
 
-The default configuration uses the Apify logo:
+Raw reviews add helpfulness counts, author ID, platform, page numbers, and timestamps. Search and app-details results return the full app metadata documented on each Apify Actor page (linked below).
 
-```typescript
-icon: 'file:logo.svg'
-```
+## Example workflows
 
-Replace the SVG files in the node directory with your own branding.
+**Triage low-star reviews to Slack.** Schedule Trigger, then **Apple App Store > Review > Get Many** (your app, sort Most Critical), then an IF node on `rating <= 2`, then Slack. This is an on-demand fetcher, not a push stream, so pair it with the Schedule Trigger for monitoring.
 
----
+**Competitor research for an agent.** **App > Search** for a keyword, then **App > Get** on the top result's `app_id`, then **Review > Get Many** for the same app, then hand the JSON to a Claude or OpenAI node. Use Simplified output to keep the context small.
 
-##### Subtitle
+**Draft review replies in your brand voice.** **Review > Get Many**, then a Claude node that drafts a personalized reply per review, then a human-approval step before posting. Sentiment and reply drafting happen in your downstream AI nodes; this node returns raw reviews only.
 
-Location: `nodes/Apify{YourActorName}/Apify{YourActorName}.node.ts`
+## Pricing
 
-The subtitle appears beneath your node in n8n workflows:
+Pay only for what you fetch. No subscription.
 
-```typescript
-subtitle: 'Run Scraper',
-```
+| Operation | Setup fee per run | Per result |
+|---|---|---|
+| Get Reviews | $0.02 | $0.0015 per review |
+| Search Apps | $0.02 | $0.0015 per app |
+| Get App Details | $0.02 | $0.02 per app |
 
-![Actor Subtitle](./docs/actor-subtitle.png)
+**$0.0015 per review. About $1.50 per 1,000 reviews. No subscription.** One $0.02 setup fee per run, plus $0.0015 per review.
 
----
+AppFigures starts at $79/month. AppFollow Pro starts at about $300/month. This node costs about $1.50 per 1,000 reviews with no minimums.
 
-##### Node description
+## Notes
 
-Location: `nodes/Apify{YourActorName}/Apify{YourActorName}.node.ts`
+- This node returns raw reviews and app data. It does not classify sentiment; run sentiment analysis downstream (Claude, GPT, or classical NLP).
+- It is an on-demand fetcher, not a webhook stream. For monitoring, pair it with the Schedule Trigger.
+- You decide your own use of the data. This project makes no legal or terms-of-service claims.
 
-This description appears in n8n's node browser:
+## Backed by these Apify APIs
 
-```typescript
-description: DESCRIPTION,
-```
+- [Apple App Store Reviews API](https://apify.com/johnvc/apple-app-store-reviews-api?fpr=9n7kx3)
+- [Apple App Store Search](https://apify.com/johnvc/apple-app-store-search?fpr=9n7kx3)
+- [Apple App Store Product API](https://apify.com/johnvc/apple-app-store-product-api?fpr=9n7kx3)
 
-![Apify Node Description](./docs/node-description.png)
+## Resources
 
----
+- [npm package](https://www.npmjs.com/package/n8n-nodes-apple-app-store-api)
+- [GitHub repository](https://github.com/johnisanerd/n8n-nodes-apple-app-store-api)
+- [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
+- [Apify](https://apify.com?fpr=9n7kx3)
 
-##### AI tool result filtering
+Want to try the AI workflows above? New to Claude? You can start a free trial with this referral: https://claude.ai/referral/uIlpa7nPLg
 
-Location: `nodes/Apify{YourActorName}/helpers/genericFunctions.ts`
+## License
 
-When your node runs in AI agent workflows, reduce token usage by filtering the returned data:
-
-```typescript
-if (isUsedAsAiTool(this.getNode().type)) {
-  results = results.map((item: any) => ({ markdown: item.markdown }));
-}
-```
-
-AI agents perform better with clean, focused data that takes up less context.
-
----
-
-#### Node discoverability
-
-The `Apify{YourActorName}.node.json` file controls where your node appears in n8n:
-
-```json
-{
-  "categories": ["Data & Storage", "Marketing & Content"],
-  "alias": ["crawler", "scraper", "website", "content"]
-}
-```
-
-Adjust `categories` to match your Actor's purpose and add relevant search keywords to `alias`.
-
-The template includes pre-configured authentication in the `credentials/` directory. Users running n8n locally provide their Apify API token. Users on n8n cloud can authenticate via OAuth2.
-
----
-
-## Development
-
-Start n8n with your custom node:
-
-```bash
-npm run dev
-```
-
-This launches n8n at `http://localhost:5678` with hot reloading enabled. Changes to your node files automatically refresh.
-
-## Getting help
-
-- [Apify API documentation](https://docs.apify.com)
-- [n8n Community Nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
-- [n8n community](https://community.n8n.io/)
-
----
-
-> **Before publishing:** Update placeholder values in [package.json](package.json) (AUTHOR_NAME, AUTHOR_EMAIL, PACKAGE_DESCRIPTION) with your information.
-
----
-
-## Published Nodes
-
-Community nodes built with this template:
-
-| Node | npm Package | Creator |
-|------|-------------|---------|
-| **Facebook Search** | [n8n-nodes-facebook-search-ppr](https://www.npmjs.com/package/n8n-nodes-facebook-search-ppr) | [danek](https://apify.com/danek) |
-| **LinkedIn Profile Enrichment** | [n8n-nodes-linkedin-profile-enrichment](https://www.npmjs.com/package/n8n-nodes-linkedin-profile-enrichment) | [anchor](https://apify.com/anchor) |
-| **Google Ads Scraper** | [n8n-nodes-google-ads-scraper](https://www.npmjs.com/package/n8n-nodes-google-ads-scraper) | [silva95gustavo](https://apify.com/silva95gustavo) |
-| **Skip Trace Scraper** | [n8n-nodes-skip-trace](https://www.npmjs.com/package/n8n-nodes-skip-trace) | [one-api](https://apify.com/one-api) |
-| **Google Search** | [n8n-nodes-google-search-scraper](https://www.npmjs.com/package/n8n-nodes-google-search-scraper) | [compass](https://apify.com/compass) |
-| **Google Maps Scraper** | [n8n-nodes-crawler-google-places](https://www.npmjs.com/package/n8n-nodes-crawler-google-places) | [apify](https://apify.com/apify) |
-| **Hypebridge Actors** | [n8n-nodes-hypebridge-actors](https://www.npmjs.com/package/n8n-nodes-hypebridge-actors) | [hypebridge](https://apify.com/hypebridge) |
-| **TikTok Scraper Ultimate** | [n8n-nodes-tiktok-scraper-ultimate](https://www.npmjs.com/package/n8n-nodes-tiktok-scraper-ultimate) | [novi](https://apify.com/novi) |
-| **TheirStack Actor** | [n8n-nodes-theirstack-actor](https://www.npmjs.com/package/n8n-nodes-theirstack-actor) | [ernesta_labs](https://apify.com/ernesta_labs) |
-
-Built a node with this template? Open a PR to add it to the list!
+[MIT](LICENSE.md)

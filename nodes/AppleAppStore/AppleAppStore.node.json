@@ -1,0 +1,38 @@
+{
+	"node": "n8n-nodes-apple-app-store-api.appleAppStore",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Analytics", "Development", "AI"],
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://docs.apify.com/platform/integrations/api#api-token"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/johnisanerd/n8n-nodes-apple-app-store-api"
+			}
+		]
+	},
+	"alias": [
+		"apple",
+		"app store",
+		"ios",
+		"macos",
+		"reviews",
+		"ratings",
+		"aso",
+		"mobile",
+		"sentiment",
+		"ai-tool",
+		"appfollow",
+		"appfigures",
+		"app search",
+		"app metadata",
+		"app details",
+		"keyword",
+		"competitor",
+		"developer"
+	]
+}

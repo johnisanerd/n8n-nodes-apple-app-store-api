@@ -4,16 +4,12 @@ export default [
 	// include base n8n config first
 	...config,
 
-	// completely ignore all __tests__ folders
+	// ignore test folders
 	{
-		ignores: [
-			'**/__tests__/**', 
-			'nodes/ApifyContentCrawler/__tests__/**', 
-			'scripts/**'
-		],
+		ignores: ['**/__tests__/**'],
 	},
 
-	// disable any-type rules everywhere
+	// allow `any` in helpers (Apify dataset rows are loosely typed)
 	{
 		rules: {
 			'@typescript-eslint/no-explicit-any': 'off',
