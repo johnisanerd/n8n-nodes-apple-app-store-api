@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-apple-app-store-api",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "n8n community node for the Apple App Store: get reviews, search results, and app details as JSON across 50+ country stores. Apify-backed, pay-per-use.",
 	"keywords": [
 		"n8n-community-node-package",
